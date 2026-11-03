@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Авторизация TikTok — код получен</title>
+<style>
+  body { margin:0; background:#0b0f0d; color:#e9ece8;
+         font:16px/1.6 -apple-system,"Segoe UI",Roboto,Arial,sans-serif; }
+  .wrap { max-width:760px; margin:0 auto; padding:56px 24px; }
+  h1 { font-size:30px; margin:0 0 6px; }
+  p { color:#c9d1cb; }
+  .box { background:#121815; border:1px solid #24312a; border-radius:14px;
+         padding:18px 20px; margin:22px 0; }
+  code, .code {
+    display:block; word-break:break-all; background:#0a0f0c; border:1px solid #24312a;
+    border-radius:10px; padding:14px 16px; color:#ffd43b; font-family:ui-monospace,Consolas,monospace;
+    font-size:15px;
+  }
+  button {
+    margin-top:12px; background:#ffd43b; color:#0c1014; border:0; border-radius:10px;
+    padding:12px 20px; font-weight:700; font-size:15px; cursor:pointer;
+  }
+  .warn { color:#ffb4b4; }
+  .muted { color:#8b958d; font-size:14px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Авторизация TikTok</h1>
+  <p id="status">Читаю параметры из адресной строки…</p>
+
+  <div class="box" id="codeBox" hidden>
+    <p style="margin:0 0 8px"><strong>authorization code</strong> — скопируй его целиком:</p>
+    <code id="code"></code>
+    <button id="copy">Скопировать</button>
+  </div>
+
+  <div class="box" id="errBox" hidden>
+    <p class="warn" id="err"></p>
+  </div>
+
+  <div class="box">
+    <p style="margin:0 0 6px"><strong>Что делать дальше</strong></p>
+    <p class="muted" style="margin:0">
+      Код одноразовый и живёт несколько минут. Вставь его в терминал:
+    </p>
+    <code>python -m agrotok tiktok-auth --code ВАШ_КОД --redirect-uri https://petrovdar.github.io/agrotok-site/callback.html</code>
+  </div>
+
+  <p class="muted">Эта страница только показывает параметры из URL. Код никуда не отправляется
+     и не сохраняется — ни на сервере, ни в localStorage.</p>
+</div>
+<script>
+(function () {
+  var params = new URLSearchParams(window.location.search);
+  var code = params.get('code');
+  var err = params.get('error') || params.get('error_description');
+  var status = document.getElementById('status');
+
+  if (err) {
+    document.getElementById('errBox').hidden = false;
+    document.getElementById('err').textContent = 'TikTok вернул ошибку: ' + err;
+    status.textContent = 'Авторизация не удалась.';
+    return;
+  }
+  if (!code) {
+    status.textContent = 'В URL нет параметра code. Похоже, страницу открыли напрямую — ' +
+                         'сюда нужно возвращаться после подтверждения доступа в TikTok.';
+    return;
+  }
+  document.getElementById('codeBox').hidden = false;
+  document.getElementById('code').textContent = code;
+  status.textContent = 'Код получен. Скопируй его и выполни команду ниже.';
+  document.getElementById('copy').addEventListener('click', function () {
+    navigator.clipboard.writeText(code).then(function () {
+      document.getElementById('copy').textContent = 'Скопировано ✓';
+    }, function () {
+      document.getElementById('copy').textContent = 'Выдели и скопируй вручную';
+    });
+  });
+  // Чистим адресную строку, чтобы код не светился в истории браузера.
+  if (window.history && window.history.replaceState) {
+    window.history.replaceState({}, document.title, window.location.pathname);
+  }
+})();
+</script>
+</body>
+</html>
